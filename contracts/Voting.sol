@@ -1,33 +1,56 @@
-// SPDX-License-Identifier: UNLICENSED
-
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract Voting {
-    struct Candidate {
-        uint id;
+contract VotingSystem {
+    struct Voter {
+        bool isRegistered;
+        bool hasVoted;
+        uint vote;
+    }
+
+    struct Group {
         string name;
-        string imageHash; // IPFS hash for candidate image
         uint voteCount;
     }
 
-    mapping(address => bool) public voters;
-    mapping(uint => Candidate) public candidates;
-    uint public candidateCount;
+    address public admin;
+    mapping(address => Voter) public voters;
+    Group[] public groups;
 
-    constructor (uint _candidateCount) {
-        candidateCount = _candidateCount;
+    constructor() {
+        admin = msg.sender;
     }
 
-    function addCandidate(string memory _name, string memory _imageHash) public {
-        candidateCount++;
-        candidates[candidateCount] = Candidate(candidateCount, _name, _imageHash, 0);
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Only admin can call this.");
+        _;
     }
 
-    function vote(uint _candidateId) public {
-        require(!voters[msg.sender], "You have already voted.");
-        require(_candidateId > 0 && _candidateId <= candidateCount, "Invalid candidate ID.");
+    function registerGroup(string memory groupName) public onlyAdmin {
+        groups.push(Group({
+            name: groupName,
+            voteCount: 0
+        }));
+    }
 
-        voters[msg.sender] = true;
-        candidates[_candidateId].voteCount++;
+    function registerVoter(address voterAddress) public onlyAdmin {
+        require(!voters[voterAddress].isRegistered, "Voter already registered.");
+        voters[voterAddress].isRegistered = true;
+        voters[voterAddress].hasVoted = false;
+    }
+
+    function vote(uint groupId) public {
+        require(voters[msg.sender].isRegistered, "You are not a registered voter.");
+        require(!voters[msg.sender].hasVoted, "You have already voted.");
+        require(groupId < groups.length, "Invalid group ID.");
+
+        voters[msg.sender].hasVoted = true;
+        voters[msg.sender].vote = groupId;
+        groups[groupId].voteCount += 1;
+    }
+
+    function getVoteCount(uint groupId) public view returns (uint) {
+        require(groupId < groups.length, "Invalid group ID.");
+        return groups[groupId].voteCount;
     }
 }
