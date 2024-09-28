@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract VotingSystem {
+contract Voting {
     struct Voter {
         bool isRegistered;
         bool hasVoted;
         uint vote;
     }
 
-    struct Group {
+    struct Candidate {
         string name;
         uint voteCount;
     }
 
     address public admin;
     mapping(address => Voter) public voters;
-    Group[] public groups;
+    Candidate[] public candidates;
 
     constructor() {
         admin = msg.sender;
@@ -26,9 +26,9 @@ contract VotingSystem {
         _;
     }
 
-    function registerGroup(string memory groupName) public onlyAdmin {
-        groups.push(Group({
-            name: groupName,
+    function addCandidate(string memory candidateName) public onlyAdmin {
+        candidates.push(Candidate({
+            name: candidateName,
             voteCount: 0
         }));
     }
@@ -39,18 +39,18 @@ contract VotingSystem {
         voters[voterAddress].hasVoted = false;
     }
 
-    function vote(uint groupId) public {
+    function vote(uint candidateId) public {
         require(voters[msg.sender].isRegistered, "You are not a registered voter.");
         require(!voters[msg.sender].hasVoted, "You have already voted.");
-        require(groupId < groups.length, "Invalid group ID.");
+        require(candidateId < candidates.length, "Candidate does not exist.");
 
         voters[msg.sender].hasVoted = true;
-        voters[msg.sender].vote = groupId;
-        groups[groupId].voteCount += 1;
+        voters[msg.sender].vote = candidateId;
+        candidates[candidateId].voteCount += 1;
     }
 
-    function getVoteCount(uint groupId) public view returns (uint) {
-        require(groupId < groups.length, "Invalid group ID.");
-        return groups[groupId].voteCount;
+    function getVoteCount(uint candidateId) public view returns (uint) {
+        require(candidateId < candidates.length, "Candidate does not exist.");
+        return candidates[candidateId].voteCount;
     }
 }
