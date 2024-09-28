@@ -265,3 +265,34 @@ $(function() {
     App.init();
   });
 });
+var session = require('express-session');
+
+// Session configuration
+app.use(session({
+    secret: 'your_secret_key',  // replace with an actual secret key
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }   // use true if using https
+}));
+// database.js
+
+const mysql = require('mysql2');
+
+// Create a connection pool
+const db = mysql.createConnection({
+    host: '127.0.0.1',   // Your MySQL host (often localhost)
+    user: 'root',        // Your MySQL username (default is 'root')
+    //password: '',        // Your MySQL password
+    database: 'evote_db' // Name of your database
+});
+
+// Connect to the database
+db.connect((err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err);
+    } else {
+        console.log('Connected to the MySQL database!');
+    }
+});
+
+module.exports = db;
