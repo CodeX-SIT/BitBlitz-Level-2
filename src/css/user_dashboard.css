@@ -9,7 +9,7 @@ body{
     z-index: 1;
     top: 0;
     left: 0;
-    background-color: #46a5f2;
+    background-color: #de4d4d;
     overflow-x: hidden;
     padding-top: 20px;
     /* border: black;
@@ -96,7 +96,7 @@ h3 {
 }
 
 .btn{
-    background-color: #46a5f2 !important;
+    background-color: #de4d4d !important;
     color: white;
 
 }
