@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import './App.css';
 
-const contractAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+const contractAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"; // Make sure this address is correct
 const contractABI = [
   {
     "inputs": [],
@@ -36,6 +36,19 @@ const contractABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "c",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -60,6 +73,19 @@ const contractABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "getCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -68,6 +94,19 @@ const contractABI = [
       }
     ],
     "name": "getVoteCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "num",
     "outputs": [
       {
         "internalType": "uint256",
@@ -160,21 +199,27 @@ function App() {
     loadGroups(contract);
   };
 
-
+  /**
+   * 
+   * @param {ethers.Contract} contract 
+   */
   const loadGroups = async (contract) => {
+    console.log(contract);
+    console.log(contract)  // Use getCount to get the number of candidates
     const groupsCount = await contract.candidates.length;
     const loadedGroups = [];
     for (let i = 0; i < groupsCount; i++) {
-      const group = await contract.candidates(i);
+      const group = await contract.candidates(i);  // Fetch candidates using valid index
       loadedGroups.push(group);
     }
     setGroups(loadedGroups);
   };
-  
+
   const addGroup = async () => {
     if (groupName) {
-      await contract.addCandidate(groupName);
-      loadGroups(contract);
+      const req = await contract.addCandidate(groupName);
+      await req.wait();
+      loadGroups(contract);  // Refresh the list after adding a candidate
     }
   };
 
@@ -192,50 +237,85 @@ function App() {
     setVoteCount(counts);
   };
 
+  const btnHandler = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    setProvider(provider);
+
+    const accounts = await provider.send("eth_requestAccounts", []);
+    setConnectedAccount(accounts[0]);
+
+    const signer = provider.getSigner();
+    setSigner(signer);
+
+    // Check if contract is deployed on the current network
+    const bytecode = await signer.provider.getCode(contractAddress);
+    if (bytecode === "0x") {
+      console.error("Contract not found on this network");
+      alert("Contract not deployed on this network. Please check the network.");
+      return;
+    }
+
+    const contract = new ethers.Contract(contractAddress, contractABI, signer);
+    setContract(contract);
+    contract.c()
+      .then((result) => {
+        console.log(result); // Output: 0
+      })
+      .catch((error) => {
+        console.error(error);
+      });
+
+
+    loadGroups(contract);
+  }
+
   return (
     <div className="App">
-      <div className="container">
-        <h1 className="my-4">Voting DApp</h1>
-        {!connectedAccount ? (
-          <button onClick={connectWallet} className="btn btn-primary">
-            Connect Wallet
-          </button>
-        ) : (
-          <div>
-            <p>Connected as: {connectedAccount}</p>
-
-            {/* Add Group */}
-            <div>
-              <h2>Add Group</h2>
-              <input
-                type="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
-                placeholder="Enter group name"
-              />
-              <button onClick={addGroup} className="btn btn-success ml-2">
-                Add Group
-              </button>
-            </div>
-
-            {/* Group List */}
-            <div className="mt-4">
-              <h2>Groups</h2>
-              <ul>
-                {groups.map((group, index) => (
-                  <li key={index}>
-                    {group.name} - Votes: {voteCount[index] || 0}
-                    <button onClick={() => voteForGroup(index)} className="btn btn-primary ml-2">
-                      Vote
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
+      <button onClick={btnHandler}>CLICK</button>
     </div>
+    // <div className="App">
+    //   <div className="container">
+    //     <h1 className="my-4">Voting DApp</h1>
+    //     {!connectedAccount ? (
+    //       <button onClick={connectWallet} className="btn btn-primary">
+    //         Connect Wallet
+    //       </button>
+    //     ) : (
+    //       <div>
+    //         <p>Connected as: {connectedAccount}</p>
+
+    //         {/* Add Group */}
+    //         <div>
+    //           <h2>Add Group</h2>
+    //           <input
+    //             type="text"
+    //             value={groupName}
+    //             onChange={(e) => setGroupName(e.target.value)}
+    //             placeholder="Enter group name"
+    //           />
+    //           <button onClick={addGroup} className="btn btn-success ml-2">
+    //             Add Group
+    //           </button>
+    //         </div>
+
+    //         {/* Group List */}
+    //         <div className="mt-4">
+    //           <h2>Groups</h2>
+    //           <ul>
+    //             {groups.map((group, index) => (
+    //               <li key={index}>
+    //                 {group.name} - Votes: {voteCount[index] || 0}
+    //                 <button onClick={() => voteForGroup(index)} className="btn btn-primary ml-2">
+    //                   Vote
+    //                 </button>
+    //               </li>
+    //             ))}
+    //           </ul>
+    //         </div>
+    //       </div>
+    //     )}
+    //   </div>
+    // </div>
   );
 }
 

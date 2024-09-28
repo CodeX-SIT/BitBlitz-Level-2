@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.27;
 
 contract Voting {
     struct Voter {
@@ -16,6 +16,8 @@ contract Voting {
     address public admin;
     mapping(address => Voter) public voters;
     Candidate[] public candidates;
+    uint256 public c = 0;
+    uint256 public num = 100;
 
     constructor() {
         admin = msg.sender;
@@ -26,7 +28,13 @@ contract Voting {
         _;
     }
 
+    function getCount() public view returns (uint256) {
+        return num;
+    }
+
+
     function addCandidate(string memory candidateName) public onlyAdmin {
+        c = c+1;
         candidates.push(Candidate({
             name: candidateName,
             voteCount: 0
@@ -53,4 +61,6 @@ contract Voting {
         require(candidateId < candidates.length, "Candidate does not exist.");
         return candidates[candidateId].voteCount;
     }
+
+    
 }
